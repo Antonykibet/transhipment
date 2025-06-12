@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetroLogistics - Tracking</title>
+    <style>
+        /* Your existing CSS */
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding-top: 60px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .header .user-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 50%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .login-button {
+            background-color: #6a5acd;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .login-button:hover {
+            background-color: #5348b1;
+        }
+
+        #locationStatus {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #555;
+        }
+        #currentCoords {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">MetroLogistics</div>
+        <div class="user-icon"></div>
+    </div>
+
+    <h1>Do not exit page, Tracking in progress...</h1>
+    <p id="locationStatus">Attempting to get location...</p>
+    <p>Current Coordinates: <span id="currentCoords">N/A</span></p>
+
+    <input type="hidden" id="vehicleId" value="{{ vehicle.id }}">
+
+
+    </body>
+    <script>
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const vehicleId = document.getElementById('vehicleId').value;
+        const locationStatusElement = document.getElementById('locationStatus');
+        const currentCoordsElement = document.getElementById('currentCoords');
+
+        // Function to send location to backend
+        function sendLocationToBackend(latitude, longitude) {
+            const csrftoken = getCookie('csrftoken')
+            fetch(`/dashboard/update_location/${vehicleId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken 
+                },
+                body: JSON.stringify({
+                    latitude: latitude,
+                    longitude: longitude
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log('Location update successful:', data.message);
+                    locationStatusElement.textContent = 'Location updated successfully.';
+                } else {
+                    console.error('Location update failed:', data.message);
+                    locationStatusElement.textContent = `Location update failed: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error sending location to backend:', error);
+                locationStatusElement.textContent = `Error: ${error.message}`;
+            });
+        }
+
+        // Function to get current position
+        function getCurrentPosition() {
+            if (navigator.geolocation) {
+                locationStatusElement.textContent = 'Getting current location...';
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        currentCoordsElement.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                        console.log('Current position:', lat, lon);
+                        sendLocationToBackend(lat, lon);
+                    },
+                    (error) => {
+                        let errorMessage = 'Error getting location: ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += "User denied the request for Geolocation.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += "Location information is unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += "The request to get user location timed out.";
+                                break;
+                            case error.UNKNOWN_ERROR:
+                                errorMessage += "An unknown error occurred.";
+                                break;
+                        }
+                        console.error(errorMessage, error);
+                        locationStatusElement.textContent = errorMessage;
+                        currentCoordsElement.textContent = 'N/A';
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 } // Options for geolocation
+                );
+            } else {
+                locationStatusElement.textContent = "Geolocation is not supported by this browser.";
+                currentCoordsElement.textContent = 'N/A';
+            }
+        }
+
+        // Periodically get and send location
+        // You might want to adjust this interval (e.g., every 10-30 seconds)
+        const updateInterval = 5000; // 5 seconds (adjust as needed)
+
+        // Initial call
+        getCurrentPosition();
+
+        // Set up interval for continuous updates
+        setInterval(getCurrentPosition, updateInterval);
+
+    </script>
+</html>

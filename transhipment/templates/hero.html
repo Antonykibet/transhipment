@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetroLogistics - Login</title>
+    <style>
+        body {
+            font-family: sans-serif; /* Using a common sans-serif font */
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0; /* Light grey background */
+            display: flex;
+            flex-direction: column; /* Arrange children vertically */
+            align-items: center; /* Center content horizontally */
+            justify-content: center; /* Center content vertically */
+            min-height: 100vh; /* Full viewport height */
+            padding-top: 60px; /* Add padding to account for the fixed header */
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between; /* Space out logo and icon */
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #ffffff; /* White header background */
+            border-bottom: 1px solid #e0e0e0; /* Light grey border at the bottom */
+            width: 100%;
+            position: fixed; /* Keep header fixed at the top */
+            top: 0;
+            left: 0;
+            box-sizing: border-box; /* Include padding and border in element's total width */
+            z-index: 1000; /* Ensure header is above other content */
+        }
+
+        .header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .header .user-icon {
+            /* Placeholder for a user icon */
+            width: 24px;
+            height: 24px;
+            background-color: #ccc; /* Placeholder color */
+            border-radius: 50%; /* Circular icon */
+            /* You would replace this with an actual icon (SVG, font icon, etc.) */
+        }
+
+        /* Removed .container styling as the heading and button are outside it */
+        /* If you still need a container for other content, you can re-add styles */
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 30px; /* Space between heading and button */
+            text-align: center; /* Ensure heading is centered */
+        }
+
+        .login-button {
+            background-color: #6a5acd; /* Purple color from the image */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px; /* More rounded corners */
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: block; /* Make button a block element to center easily */
+            margin: 0 auto; /* Center the block button */
+        }
+
+        .login-button:hover {
+            background-color: #5348b1; /* Darker shade on hover */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">MetroLogistics</div>
+        <div class="user-icon"></div>
+    </div>
+
+    <h1>Transshipment Management System</h1>
+    <a href="/dashboard/login"><button class="login-button">Login</button></a>
+
+    </body>
+</html>

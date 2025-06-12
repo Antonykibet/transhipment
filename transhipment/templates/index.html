@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Finder</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px); /* Adjust for padding and border */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        #routeImage {
+            display: block; /* Ensure image takes up its own line */
+            max-width: 100%; /* Make image responsive */
+            height: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+        #loading, #error {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        #loading {
+            color: #5cb85c;
+        }
+        #error {
+            color: #d9534f;
+        }
+        #costInfo {
+             text-align: center;
+             margin-top: 15px;
+             font-size: 1.1rem;
+             color: #333;
+             font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Find Your Route</h1>
+        <form id="routeForm">
+            <div class="form-group">
+                <label for="originLat">Origin Latitude:</label>
+                <input type="text" id="originLat" required placeholder="e.g., 40.7128" >
+            </div>
+            <div class="form-group">
+                <label for="originLon">Origin Longitude:</label>
+                <input type="text" id="originLon" required placeholder="e.g., -74.0060">
+            </div>
+            <div class="form-group">
+                <label for="destinationLat">Destination Latitude:</label>
+                <input type="text" id="destinationLat" required placeholder="e.g., 34.0522">
+            </div>
+            <div class="form-group">
+                <label for="destinationLon">Destination Longitude:</label>
+                <input type="text" id="destinationLon" required placeholder="e.g., -118.2437">
+            </div>
+            <button type="submit">Get Route</button>
+        </form>
+
+        <div id="loading" style="display: none;">Loading...</div>
+        <div id="error" style="display: none;"></div>
+        <div id="costInfo"></div>
+    </div>
+
+    <img id="routeImage" src="" alt="Route Map" style="display: none;">
+
+    <script>
+        document.getElementById('routeForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Get input values
+            const originLat = document.getElementById('originLat').value;
+            const originLon = document.getElementById('originLon').value;
+            const destinationLat = document.getElementById('destinationLat').value;
+            const destinationLon = document.getElementById('destinationLon').value;
+
+            // Get elements to update
+            const routeImage = document.getElementById('routeImage');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const costInfoDiv = document.getElementById('costInfo');
+
+            // Reset previous results
+            routeImage.style.display = 'none';
+            routeImage.src = ''; // Clear previous image source
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+            costInfoDiv.textContent = '';
+
+            // Show loading indicator
+            loadingDiv.style.display = 'block';
+
+            // Construct the URL for your Django view
+            // Replace '/your_app/get_route_data/' with the actual URL pattern for your view
+            const djangoViewUrl = `http://127.0.0.1:8000/dashboard/plan?origin_lat=${originLat}&origin_lon=${originLon}&destination_lat=${destinationLat}&destination_lon=${destinationLon}`;
+            // You can add &cost_metric=time here if you want the fastest route by default
+
+            // Fetch the route data from the Django view
+            fetch(djangoViewUrl)
+                .then(response => {
+                    loadingDiv.style.display = 'none'; // Hide loading indicator
+                    if (!response.ok) {
+                        // Handle HTTP errors
+                        console.log('response failed')
+                        return response.json().then(err => { throw new Error(err.error || `HTTP error! status: ${response.status}`); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Display the image
+                        console.log(data)
+                        routeImage.src = data.image_url;
+                        routeImage.style.display = 'block';
+
+                        // Display cost information
+                        if (data.total_cost !== undefined && data.cost_unit) {
+                             costInfoDiv.textContent = `Total Cost (${data.cost_metric_used}): ${data.total_cost.toFixed(2)} ${data.cost_unit}`;
+                        }
+
+                    } else {
+                        // Display error message from the server
+                        errorDiv.textContent = data.error || 'An unknown error occurred.';
+                        errorDiv.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none'; // Hide loading indicator
+                    errorDiv.textContent = `Error fetching route: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                    console.error('Error fetching route:', error);
+                });
+        });
+    </script>
+
+</body>
+</html>

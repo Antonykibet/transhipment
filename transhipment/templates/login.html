@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetroLogistics - Login/Register</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding-top: 60px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .header .user-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 50%;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] { 
+            width: calc(100% - 24px);
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .auth-button { 
+            background-color: #6a5acd;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .auth-button:hover {
+            background-color: #5348b1;
+        }
+
+        .toggle-link {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .toggle-link a {
+            color: #6a5acd;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .toggle-link a:hover {
+            text-decoration: underline;
+        }
+
+        
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        
+        #registerForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">MetroLogistics</div>
+        <div class="user-icon"></div>
+    </div>
+
+    <div class="container">
+        <h2 id="formTitle">Login</h2>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginUsername">Username:</label>
+                <input type="text" id="loginUsername" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" name="password" required>
+            </div>
+            <button type="submit" class="auth-button">Login</button>
+        </form>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="registerUsername">Username:</label>
+                <input type="text" id="registerUsername" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="registerEmail">Email:</label>
+                <input type="email" id="registerEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">Password:</label>
+                <input type="password" id="registerPassword" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password:</label>
+                <input type="password" id="confirmPassword" name="confirm_password" required>
+            </div>
+            <button type="submit" class="auth-button">Create Account</button>
+        </form>
+
+        <div id="authMessage" class="message" style="display: none;"></div>
+
+        <div class="toggle-link">
+            <p id="toggleLoginLink">Don't have an account? <a href="#" id="showRegister">Create Account</a></p>
+            <p id="toggleRegisterLink" style="display: none;">Already have an account? <a href="#" id="showLogin">Login</a></p>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authMessage = document.getElementById('authMessage');
+        const formTitle = document.getElementById('formTitle');
+        const showRegisterLink = document.getElementById('showRegister');
+        const showLoginLink = document.getElementById('showLogin');
+        const toggleLoginParagraph = document.getElementById('toggleLoginLink');
+        const toggleRegisterParagraph = document.getElementById('toggleRegisterLink');
+
+        function showMessage(message, type) {
+            authMessage.textContent = message;
+            authMessage.className = `message ${type}`;
+            authMessage.style.display = 'block';
+        }
+
+        function toggleForms(showFormId) {
+            authMessage.style.display = 'none'; // Clear messages on toggle
+            if (showFormId === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                formTitle.textContent = 'Login';
+                toggleLoginParagraph.style.display = 'block';
+                toggleRegisterParagraph.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                formTitle.textContent = 'Create Account';
+                toggleLoginParagraph.style.display = 'none';
+                toggleRegisterParagraph.style.display = 'block';
+            }
+        }
+
+        // Event listeners for toggling forms
+        showRegisterLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            toggleForms('register');
+        });
+
+        showLoginLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            toggleForms('login');
+        });
+
+        
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            authMessage.style.display = 'none';
+
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            
+            const loginApiUrl = '/login';
+
+            try {
+                const response = await fetch(loginApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'), 
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Login successful! Redirecting...', 'success');
+                    console.log('Login successful:', data);
+                    
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/dashboard';
+                    }, 1500);
+                } else {
+                    const errorMessage = data.message || data.detail || 'Login failed. Please check your credentials.';
+                    showMessage(errorMessage, 'error');
+                    console.error('Login failed:', data);
+                }
+            } catch (error) {
+                showMessage('An error occurred. Please try again later.', 'error');
+                console.error('Error during login fetch:', error);
+            }
+        });
+
+        
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            authMessage.style.display = 'none';
+
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match!', 'error');
+                return; 
+            }
+
+            
+            const registerApiUrl = '/register';
+            
+            try {
+                const response = await fetch(registerApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'), 
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password
+                    })
+                });
+                alert(response.ok)
+
+                const data = await response.json();
+                console.log(data)
+
+                if (response.ok) {
+                    showMessage('Account created successfully! You can now log in.', 'success');
+                    console.log('Registration successful:', data);
+                    
+                    registerForm.reset(); 
+                    toggleForms('login'); 
+                } else {
+                    let errorMessage = 'Registration failed.';
+                    
+                    if (data.username) errorMessage += ` Username: ${data.username.join(', ')}`;
+                    if (data.email) errorMessage += ` Email: ${data.email.join(', ')}`;
+                    if (data.password) errorMessage += ` Password: ${data.password.join(', ')}`;
+                    if (data.non_field_errors) errorMessage += ` ${data.non_field_errors.join(', ')}`;
+                    if (!data.username && !data.email && !data.password && !data.non_field_errors && data.detail) {
+                        errorMessage = data.detail; 
+                    }
+                    showMessage(errorMessage, 'error');
+                    console.error('Registration failed:', data);
+                }
+            } catch (error) {
+                showMessage('An error occurred during registration. Please try again later.', 'error');
+                console.error('Error during registration fetch:', error);
+            }
+        });
+
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+
+</body>
+</html

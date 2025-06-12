@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    <style>
+        body {
+            font-family: sans-serif; /* Consistent font */
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0; /* Consistent background */
+            padding-top: 60px; /* Space for the fixed header */
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between; /* Space out logo and icon */
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #ffffff; /* White header background */
+            border-bottom: 1px solid #e0e0e0; /* Light grey border at the bottom */
+            width: 100%;
+            position: fixed; /* Keep header fixed at the top */
+            top: 0;
+            left: 0;
+            box-sizing: border-box; /* Include padding and border in element's total width */
+            z-index: 1000; /* Ensure header is above other content */
+        }
+
+        .header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .header .user-icon {
+            /* Placeholder for a user icon */
+            width: 24px;
+            height: 24px;
+            background-color: #ccc; /* Placeholder color */
+            border-radius: 50%; /* Circular icon */
+            /* You would replace this with an actual icon (SVG, font icon, etc.) */
+        }
+
+        .dashboard-container {
+            display: grid; /* Use CSS Grid for the 3-column layout */
+            grid-template-columns: 1fr 2fr 1fr; /* Example: Column 2 is wider */
+            gap: 20px; /* Space between columns */
+            padding: 20px;
+            max-width: 90vw; /* Max width for the dashboard content */
+            margin: 20px auto; /* Center the dashboard container */
+        }
+
+        .column {
+            background-color: #ffffff; /* White background for columns */
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+            padding: 20px;
+            display: flex; /* Use flexbox for vertical stacking within columns */
+            flex-direction: column;
+        }
+
+        /* Specific column styles */
+        .column-1 {
+            /* Styles for the vehicles column */
+        }
+
+        .column-2 {
+
+            /* Styles for the trip details column */
+        }
+
+        h3 { /* Styling for section headings within columns */
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: left; /* Changed from center to left */
+        }
+
+        /* Styling for the Truck 1 form */
+        .vehicle-form h4 {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 15px;
+            text-align: left; /* Changed from center to left */
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            background-color: #5cb85c; /* Green color for submit */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .submit-button:hover {
+            background-color: #4cae4c;
+        }
+
+        /* Styling for Column 2 divs */
+        .tracking-section, .map-section {
+            border: 1px solid #ccc; /* Visible border as requested */
+            margin-bottom: 20px; /* Space between the two divs */
+            padding: 15px;
+            border-radius: 4px;
+            flex-grow: 1; /* Allow divs to grow and fill space */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tracking-section h4, .map-section h4 {
+             font-size: 1.1rem;
+             color: #555;
+             margin-bottom: 10px;
+             text-align: center; /* Keeping these centered as they are for the middle column sections */
+        }
+
+        /* Placeholder content styling */
+        .placeholder {
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            flex-grow: 1; /* Placeholder fills available space */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Styling for Column 3 trip details */
+        .trip-details p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: #333;
+            text-align: left;
+        }
+
+        .trip-details p strong {
+            color: #555;
+        }
+
+        #map { height: 180px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">MetroLogistics</div>
+        <div class="user-icon"></div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="column column-1">
+
+            <h3>Plan Trip</h3>
+            <div class="vehicle-form">
+                <form action="/dashboard/plan" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="vehicle">Select Vehicle:</label>
+                        <select id="vehicle_select" name="vehicle">
+                            {% for vehicle in vehicles %}
+                                <option value="{{ vehicle.id }}">{{ vehicle.number_plate }} ({{ vehicle.brand }} {{ vehicle.model }})</option>
+                            {% empty %}
+                                <option value="">No vehicles available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="driver">Select driver:</label>
+                        <select id="driver_select" name="driver">
+                            {% for driver in drivers %}
+                                <option value="{{ driver.id }}">{{ driver.name }} ({{ driver.age }} years old)</option>
+                            {% empty %}
+                                <option value="">No drivers available</option>
+                            {% endfor %}
+                        </select>
+                    </div> 
+                    <div class="form-group">
+                        <label for="truck1_origin_lat">Origin Latitude:</label>
+                        <input type="text" id="truck1_origin_lat" name="origin_lat" required placeholder="e.g., 40.7128">
+                    </div>
+                    <div class="form-group">
+                        <label for="truck1_origin_lon">Origin Longitude:</label>
+                        <input type="text" id="truck1_origin_lon" name="origin_lon" required placeholder="e.g., -74.0060">
+                    </div>
+                    <div class="form-group">
+                        <label for="truck1_dest_lat">Destination Latitude:</label>
+                        <input type="text" id="truck1_dest_lat" name="dest_lat" required placeholder="e.g., 34.0522">
+                    </div>
+                    <div class="form-group">
+                        <label for="truck1_dest_lon">Destination Longitude:</label>
+                        <input type="text" id="truck1_dest_lon" name="dest_lon" required placeholder="e.g., -118.2437">
+                    </div>
+                    <button type="submit" class="submit-button">Plan Route</button>
+                </form>
+            </div>
+
+            <hr style="width:100%;">
+
+            <h3>Vehicles</h3>
+            <div class="vehicle-form">
+                <ul>
+                    {% for vehicle in vehicles %}
+                        <li>{{ vehicle.number_plate }} - {{ vehicle.brand }} {{ vehicle.model }}</li>
+                    {% empty %}
+                        <li>No vehicles added yet.</li>
+                    {% endfor %}
+                </ul>
+                <h4>Add Vehicle</h4>
+                <form action="/dashboard/add_vehicle" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="number_plate">Number plate:</label>
+                        <input type="text" id="number_plate" name="number_plate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <input type="text" id="type" name="type" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="brand">Brand</label>
+                        <input type="text" id="brand" name="brand" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="model">Model</label>
+                        <input type="text" id="model" name="model" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="consumption">Consumption per kilometer</label>
+                        <input type="text" id="consumption" name="consumption" required>
+                    </div>
+                    <button type="submit" class="submit-button">Add Vehicle</button>
+                </form>
+            </div>
+
+            <hr style="width:100%;">
+
+            <h3>Drivers</h3>
+            <div class="driver-form">
+                <div>
+                    <ul>
+                        {% for driver in drivers %}
+                            <li>{{ driver.name }} ({{ driver.age }} years old)</li>
+                        {% empty %}
+                            <li>No drivers added yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <h4>Add Driver</h4>
+                <form action="/dashboard/add_driver" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" id="driver_name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <input type="text" id="driver_age" name="age" required>
+                    </div>
+                    <button type="submit" class="submit-button">Add Driver</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="column column-2">
+            <div class="tracking-section">
+                <h4>Planned Route Map</h4>
+                 {% if latest_route.route_image %}
+                     <img id="routeImageDisplay" src="{{ latest_route.route_image}}" alt="Last Planned Route Map" style="max-width: 100%; height: auto; display: block;">
+                 {% else %}
+                     <div class="placeholder">No route image available for the latest trip.</div>
+                 {% endif %}
+                </div>
+            <div class="map-section">
+                 <h4>Current Location</h4>
+                 <div id="map" class="placeholder"></div>
+            </div>
+        </div>
+
+        <div class="column column-3">
+            <h3>Trip Details</h3>
+            <div class="trip-details">
+        {% if latest_route %}
+            <span style="display: none;"  id="vehicleId">{{ latest_route.vehicle.id }}</span>
+            <p><strong>Driver:</strong> <span id="driverDetail">{{ latest_route.driver.name }}</span></p>
+            <p><strong>Vehicle:</strong> <span id="vehicleDetail">{{ latest_route.vehicle.brand }}</span></p>
+            <p><strong>From:</strong> <span id="tripFrom">{{ latest_route.origin_lattitude }}, {{ latest_route.origin_longitude }}</span></p>
+            <p><strong>To:</strong> <span id="tripTo">{{ latest_route.destination_lattitude }}, {{ latest_route.destination_longitude }}</span></p>
+            <p><strong>Distance:</strong> <span id="tripDistance">{{ latest_route.distance|default:"N/A" }}</span> km</p>
+            <p><strong>Cost:</strong> <span id="tripCost">KES {{ latest_route.route_cost|floatformat:2|default:"N/A" }}</span></p>
+            <p><strong>Tracking link:</strong>
+                <a id="trackingLink" href="http://localhost:8000/dashboard/tracker/{{ latest_route.vehicle.id }}/">
+                    http://localhost:8000/dashboard/tracker/{{ latest_route.vehicle.id }}
+                </a>
+            </p>
+        {% else %}
+            <p>No trip details available yet. Plan a route to see details here.</p>
+            <div class="map-section" style="margin-top: 20px;">
+                <h4>Last Planned Route Map</h4>
+                <div class="placeholder">No route image available yet.</div>
+            </div>
+        {% endif %}
+    </div>
+        </div>
+    </div>
+
+    <script>
+        let vehicleID = document.getElementById('vehicleId').textContent
+        let lat=-1.300890
+        let long=36.909875
+        function fetch_location(){
+            fetch(`/dashboard/get_location/${vehicleID}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                lat = data.lattitude
+                long = data.longitude
+            })
+            .catch(error => {
+                console.error('Error retrieving data:', error);
+            });
+        }
+        var map = L.map('map').setView([lat, long], 13);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+        var marker = L.marker([lat, long]).addTo(map);
+
+        fetch_location()
+        setInterval(fetch_location, 5000);
+    </script>
+</body>
+</html>
